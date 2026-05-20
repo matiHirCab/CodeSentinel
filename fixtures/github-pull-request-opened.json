@@ -1,0 +1,34 @@
+{
+  "action": "opened",
+  "installation": {
+    "id": 12345
+  },
+  "repository": {
+    "id": 98765,
+    "name": "demo-repo",
+    "full_name": "acme/demo-repo",
+    "default_branch": "main",
+    "private": false,
+    "owner": {
+      "login": "acme"
+    }
+  },
+  "pull_request": {
+    "number": 7,
+    "title": "Add payment retry handling",
+    "body": "Adds retry handling around payment capture.",
+    "state": "open",
+    "draft": false,
+    "html_url": "https://github.com/acme/demo-repo/pull/7",
+    "user": {
+      "login": "octocat"
+    },
+    "base": {
+      "ref": "main"
+    },
+    "head": {
+      "ref": "feature/payment-retry",
+      "sha": "abc1234def5678"
+    }
+  }
+}

@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ReviewRunStatus {
+  pending
+  running
+  draft
+  failed
+  posted
+  superseded
+}
+
+enum PostingStatus {
+  not_posted
+  posting
+  posted
+  failed
+  partial
+}
+
+enum FindingSeverity {
+  critical
+  high
+  medium
+  low
+}
+
+enum FindingCategory {
+  correctness
+  security
+  architecture
+  performance
+  testing
+  observability
+  maintainability
+  devex
+  deployment
+}
+
+model GitHubInstallation {
+  id             String       @id @default(cuid())
+  installationId BigInt       @unique
+  accountLogin   String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  repositories   Repository[]
+}
+
+model Repository {
+  id             String             @id @default(cuid())
+  githubId       BigInt             @unique
+  installationId String
+  owner          String
+  name           String
+  fullName       String
+  defaultBranch  String
+  private        Boolean            @default(false)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  installation   GitHubInstallation @relation(fields: [installationId], references: [id])
+  pullRequests   PullRequest[]
+  analysisJobs   AnalysisJob[]
+
+  @@unique([owner, name])
+}
+
+model PullRequest {
+  id           String        @id @default(cuid())
+  repositoryId String
+  number       Int
+  title        String
+  body         String?
+  authorLogin  String
+  baseBranch   String
+  headBranch   String
+  headSha      String
+  state        String
+  draft        Boolean       @default(false)
+  htmlUrl      String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  repository   Repository    @relation(fields: [repositoryId], references: [id])
+  changedFiles ChangedFile[]
+  jobs         AnalysisJob[]
+  reviewRuns   ReviewRun[]
+
+  @@unique([repositoryId, number])
+}
+
+model ChangedFile {
+  id            String      @id @default(cuid())
+  pullRequestId String
+  path          String
+  status        String
+  additions     Int         @default(0)
+  deletions     Int         @default(0)
+  patch         String?
+  previousPath  String?
+  createdAt     DateTime    @default(now())
+  pullRequest   PullRequest @relation(fields: [pullRequestId], references: [id])
+
+  @@unique([pullRequestId, path])
+}
+
+model AnalysisJob {
+  id             String          @id @default(cuid())
+  repositoryId   String
+  pullRequestId  String
+  installationId BigInt
+  pullNumber     Int
+  headSha        String
+  status         ReviewRunStatus @default(pending)
+  bullJobId      String?
+  error          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  repository     Repository      @relation(fields: [repositoryId], references: [id])
+  pullRequest    PullRequest     @relation(fields: [pullRequestId], references: [id])
+  reviewRuns     ReviewRun[]
+
+  @@unique([repositoryId, pullNumber, headSha])
+}
+
+model ReviewRun {
+  id                       String          @id @default(cuid())
+  analysisJobId            String
+  pullRequestId            String
+  headSha                  String
+  status                   ReviewRunStatus @default(pending)
+  postingStatus            PostingStatus   @default(not_posted)
+  provider                 String
+  summary                  String?
+  architectureNotes        String?
+  testingRecommendations   String?
+  riskAssessment           Json?
+  error                    String?
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @updatedAt
+  analysisJob              AnalysisJob     @relation(fields: [analysisJobId], references: [id])
+  pullRequest              PullRequest     @relation(fields: [pullRequestId], references: [id])
+  findings                 Finding[]
+  postingAttempts          PostingAttempt[]
+
+  @@unique([pullRequestId, headSha, provider])
+}
+
+model Finding {
+  id             String          @id @default(cuid())
+  reviewRunId    String
+  filePath       String?
+  startLine      Int?
+  endLine        Int?
+  severity       FindingSeverity
+  category       FindingCategory
+  title          String
+  risk           String
+  evidence       String
+  suggestion     String?
+  confidence     Float           @default(0.75)
+  approved       Boolean         @default(false)
+  posted         Boolean         @default(false)
+  githubCommentId String?
+  createdAt      DateTime        @default(now())
+  reviewRun      ReviewRun       @relation(fields: [reviewRunId], references: [id])
+}
+
+model PostingAttempt {
+  id              String        @id @default(cuid())
+  reviewRunId     String
+  status          PostingStatus
+  selectedFindingIds String[]
+  includeSummary  Boolean       @default(true)
+  error           String?
+  githubReviewId  String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  reviewRun       ReviewRun     @relation(fields: [reviewRunId], references: [id])
+}

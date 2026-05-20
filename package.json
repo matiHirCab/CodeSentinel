@@ -1,0 +1,31 @@
+{
+  "name": "codesentinel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev": "corepack pnpm --parallel --filter @codesentinel/api --filter @codesentinel/worker --filter @codesentinel/frontend dev",
+    "build": "corepack pnpm -r build",
+    "test": "corepack pnpm --filter @codesentinel/shared build && corepack pnpm -r test",
+    "lint": "corepack pnpm -r lint",
+    "typecheck": "corepack pnpm --filter @codesentinel/shared build && corepack pnpm -r typecheck",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^22.10.2",
+    "eslint": "^9.17.0",
+    "prettier": "^3.4.2",
+    "prisma": "^6.1.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.1.0"
+  }
+}
